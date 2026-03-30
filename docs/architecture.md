@@ -92,20 +92,46 @@ result/page.tsx（結果表示）
 └─────────────────────────────────────────────┘
 ```
 
+### ステータス定義
+
+| Notion ステータス | Supabase is_active | アプリへの影響 |
+|-----------------|-------------------|--------------|
+| 公開 | true | クイズに出題される |
+| 公開停止 | false | 出題されない（データは保持） |
+| 下書き | false | 出題されない（編集中） |
+
 ### 問題管理フロー
 
+#### 新規追加
 ```
 1. Claude.ai / ChatGPT で問題文・選択肢・解説を生成
        ↓
-2. Notion のデータベースに入力
+2. Notion のデータベースに入力（ステータス：下書き）
        ↓
-3. Notion でステータスを「公開」に変更
+3. 内容を確認後、ステータスを「公開」に変更
        ↓ Notion オートメーションが Webhook を発火
 4. 同期用 API（app/api/sync）が Notion API からデータ取得
        ↓
-5. Supabase（PostgreSQL）のテーブルへ書き込み
+5. Supabase へ upsert（is_active: true）
        ↓
 6. Next.js アプリが Supabase から問題を取得して表示
+```
+
+#### 既存問題の編集
+```
+1. ステータスを「下書き」に変更
+       ↓ Webhook 発火 → Supabase の is_active が false に（出題停止）
+2. 問題文・選択肢・解説などを編集
+       ↓
+3. 編集完了後、ステータスを「公開」に変更
+       ↓ Webhook 発火 → Supabase に最新内容で upsert・is_active: true
+```
+
+#### 公開停止
+```
+ステータスを「公開停止」に変更
+    ↓ Webhook 発火 → Supabase の is_active が false に
+    ↓ アプリから即座に非表示（データは Supabase に保持）
 ```
 
 ### Supabase テーブル設計（予定）
@@ -113,15 +139,31 @@ result/page.tsx（結果表示）
 ```sql
 -- 問題テーブル
 CREATE TABLE questions (
-  id          serial PRIMARY KEY,
-  category    text NOT NULL,   -- 'tool' | 'term' | 'usage' | 'risk'
-  text        text NOT NULL,   -- 問題文
-  options     jsonb NOT NULL,  -- 選択肢（配列）
-  answer_index integer NOT NULL, -- 正答インデックス（0〜3）
-  explanation text NOT NULL,   -- 解説文
-  is_active   boolean DEFAULT true, -- 公開フラグ
-  created_at  timestamp DEFAULT now()
+  id            serial PRIMARY KEY,
+  notion_id     text UNIQUE NOT NULL,  -- Notion ページ ID（同期の重複防止）
+  category      text NOT NULL,         -- 'tool' | 'term' | 'usage' | 'risk'
+  question_text text NOT NULL,         -- 問題文
+  options       jsonb NOT NULL,        -- 選択肢（配列）
+  answer_index  integer NOT NULL,      -- 正答インデックス（0〜3）
+  explanation   text NOT NULL,         -- 解説文
+  is_active     boolean DEFAULT true,  -- 公開フラグ
+  created_at    timestamp DEFAULT now(),
+  updated_at    timestamp DEFAULT now()
 );
+```
+
+#### Phase 3 以降：カテゴリ均等ランダム取得クエリ
+
+問題数が増えた際は、カテゴリごとに指定数をランダム取得して出題する。
+
+```sql
+(SELECT * FROM questions WHERE category='tool'  AND is_active=true ORDER BY RANDOM() LIMIT 3)
+UNION ALL
+(SELECT * FROM questions WHERE category='term'  AND is_active=true ORDER BY RANDOM() LIMIT 3)
+UNION ALL
+(SELECT * FROM questions WHERE category='usage' AND is_active=true ORDER BY RANDOM() LIMIT 2)
+UNION ALL
+(SELECT * FROM questions WHERE category='risk'  AND is_active=true ORDER BY RANDOM() LIMIT 2)
 ```
 
 ---

@@ -40,6 +40,20 @@ export default function Home() {
             クイズを始める
           </Link>
         </div>
+
+        {/* ユースケースへの導線 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-slate-700">ユースケース</p>
+            <p className="text-xs text-slate-400 mt-0.5">AIのビジネス活用事例・導入ヒント</p>
+          </div>
+          <Link
+            href="/usecases"
+            className="flex-shrink-0 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors"
+          >
+            記事を読む →
+          </Link>
+        </div>
       </div>
     </main>
   )
