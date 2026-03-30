@@ -113,15 +113,31 @@ result/page.tsx（結果表示）
 ```sql
 -- 問題テーブル
 CREATE TABLE questions (
-  id          serial PRIMARY KEY,
-  category    text NOT NULL,   -- 'tool' | 'term' | 'usage' | 'risk'
-  text        text NOT NULL,   -- 問題文
-  options     jsonb NOT NULL,  -- 選択肢（配列）
-  answer_index integer NOT NULL, -- 正答インデックス（0〜3）
-  explanation text NOT NULL,   -- 解説文
-  is_active   boolean DEFAULT true, -- 公開フラグ
-  created_at  timestamp DEFAULT now()
+  id            serial PRIMARY KEY,
+  notion_id     text UNIQUE NOT NULL,  -- Notion ページ ID（同期の重複防止）
+  category      text NOT NULL,         -- 'tool' | 'term' | 'usage' | 'risk'
+  question_text text NOT NULL,         -- 問題文
+  options       jsonb NOT NULL,        -- 選択肢（配列）
+  answer_index  integer NOT NULL,      -- 正答インデックス（0〜3）
+  explanation   text NOT NULL,         -- 解説文
+  is_active     boolean DEFAULT true,  -- 公開フラグ
+  created_at    timestamp DEFAULT now(),
+  updated_at    timestamp DEFAULT now()
 );
+```
+
+#### Phase 3 以降：カテゴリ均等ランダム取得クエリ
+
+問題数が増えた際は、カテゴリごとに指定数をランダム取得して出題する。
+
+```sql
+(SELECT * FROM questions WHERE category='tool'  AND is_active=true ORDER BY RANDOM() LIMIT 3)
+UNION ALL
+(SELECT * FROM questions WHERE category='term'  AND is_active=true ORDER BY RANDOM() LIMIT 3)
+UNION ALL
+(SELECT * FROM questions WHERE category='usage' AND is_active=true ORDER BY RANDOM() LIMIT 2)
+UNION ALL
+(SELECT * FROM questions WHERE category='risk'  AND is_active=true ORDER BY RANDOM() LIMIT 2)
 ```
 
 ---
