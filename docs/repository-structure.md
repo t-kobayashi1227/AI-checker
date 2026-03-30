@@ -1,8 +1,9 @@
 # リポジトリ構造定義書
 
-**プロジェクト名:** AIレベルチェッククイズアプリ
+**プロジェクト名:** AIレベルチェック＆ユースケースサイト
 **作成日:** 2026-03-29
-**バージョン:** 1.0
+**更新日:** 2026-03-31
+**バージョン:** 2.0
 
 ---
 
@@ -10,128 +11,149 @@
 
 ```
 aichecker/
-├── app/                        # Next.js App Router（ページ・ルーティング）
-│   ├── layout.tsx              # 全画面共通レイアウト
-│   ├── page.tsx                # トップ画面（クイズ開始）
-│   ├── globals.css             # グローバルスタイル
-│   ├── favicon.ico             # ファビコン
+├── app/                              # Next.js App Router（ページ・ルーティング）
+│   ├── layout.tsx                    # 全画面共通レイアウト・フォント設定
+│   ├── page.tsx                      # トップ画面（クイズ開始 + ユースケース導線）
+│   ├── globals.css                   # グローバルスタイル
+│   ├── favicon.ico                   # ファビコン
 │   ├── quiz/
-│   │   └── page.tsx            # クイズ画面（10問）
-│   └── result/
-│       └── page.tsx            # 結果・レベル判定画面
+│   │   └── page.tsx                  # クイズ画面（Supabase から問題取得）
+│   ├── result/
+│   │   └── page.tsx                  # 結果・レベル判定画面
+│   ├── usecases/
+│   │   ├── page.tsx                  # ユースケース一覧（カテゴリフィルタ付き）
+│   │   └── [slug]/
+│   │       └── page.tsx              # ユースケース記事詳細
+│   └── api/
+│       └── sync/
+│           └── route.ts              # Notion → Supabase 問題同期 Webhook
 │
-├── components/                 # 再利用可能な UI コンポーネント
-│   ├── QuizCard.tsx            # 問題文・4択選択
-│   ├── FeedbackBanner.tsx      # 正誤・解説の即時表示
-│   └── ResultCard.tsx          # レベル・スコア・アドバイス表示
+├── components/                       # UI コンポーネント（1ファイル = 1コンポーネント）
+│   │
+│   │  ── AIチェッカー ──
+│   ├── QuizCard.tsx                  # 問題文・4択ボタン（正誤ハイライト）
+│   ├── QuizGame.tsx                  # クイズ進行の状態管理（Client Component）
+│   ├── FeedbackBanner.tsx            # 回答後の正誤・解説・次へボタン
+│   ├── ResultCard.tsx                # スコア・レベル・アドバイス・ボタン
+│   │
+│   │  ── ユースケース ──
+│   ├── ArticleCard.tsx               # 記事一覧カード（サムネイル・カテゴリ・タイトル）
+│   ├── ArticleContent.tsx            # Notion ブロックを HTML にレンダリング
+│   └── CategoryFilter.tsx            # カテゴリ絞り込みサイドバー（Client Component）
 │
-├── data/                       # 静的データ
-│   └── questions.ts            # 問題データ（10問）
+├── data/                             # 静的データ（Phase 1 フォールバック用）
+│   └── questions.ts                  # 問題データ（10問）
 │
-├── types/                      # TypeScript 型定義
-│   └── quiz.ts                 # クイズ関連の型
+├── lib/                              # 共通ライブラリ
+│   └── supabase.ts                   # Supabase クライアント
 │
-├── docs/                       # プロジェクトドキュメント
-│   ├── product-requirements.md     # プロダクト要求仕様書
-│   ├── development-guidelines.md   # 開発ガイドライン
-│   ├── repository-structure.md     # リポジトリ構造定義書（本文書）
-│   ├── feature-design.md           # 機能設計書
-│   └── architecture.md             # アーキテクチャ設計書
+├── types/                            # TypeScript 型定義
+│   ├── quiz.ts                       # Question・Level・QuizResult 型
+│   └── article.ts                    # Article・Block・ArticleSummary 型
 │
-├── public/                     # 静的アセット
-│   └── （画像・アイコン等）
+├── docs/                             # プロジェクトドキュメント
+│   ├── product-requirements.md       # プロダクト要求仕様書
+│   ├── development-guidelines.md     # 開発ガイドライン
+│   ├── repository-structure.md       # リポジトリ構造定義書（本文書）
+│   ├── feature-design.md             # 機能設計書（クイズ）
+│   ├── architecture.md               # アーキテクチャ設計書
+│   └── usecases-design.md            # ユースケースページ設計書
 │
-├── CLAUDE.md                   # AI エージェント向けプロジェクト指示書
-├── README.md                   # プロジェクト概要
-├── next.config.ts              # Next.js 設定
-├── tsconfig.json               # TypeScript 設定
-├── eslint.config.mjs           # ESLint 設定
-├── postcss.config.mjs          # PostCSS 設定（Tailwind CSS）
-├── package.json                # 依存パッケージ
-└── package-lock.json           # パッケージバージョンのロック
+├── public/                           # 静的アセット（画像・OGP等）
+├── CLAUDE.md                         # AI エージェント向けプロジェクト指示書
+├── next.config.ts                    # Next.js 設定
+├── tsconfig.json                     # TypeScript 設定
+├── eslint.config.mjs                 # ESLint 設定
+├── postcss.config.mjs                # PostCSS 設定（Tailwind CSS）
+├── package.json                      # 依存パッケージ
+└── package-lock.json                 # パッケージバージョンのロック
 ```
 
 ---
 
-## 2. 各ディレクトリの責務
+## 2. ページ一覧
 
-### `/app`
-Next.js App Router のページファイルを置く。
-**ルーティングと最小限のレイアウトのみ**を担当し、ロジックや UI は `/components` に委ねる。
-
-| ファイル | 役割 |
-|---------|------|
-| `layout.tsx` | 全画面共通のHTMLラッパー・フォント設定など |
-| `page.tsx` | トップ画面。クイズ開始ボタンのみのシンプルな画面 |
-| `quiz/page.tsx` | クイズ進行画面。`QuizCard` と `FeedbackBanner` を使用 |
-| `result/page.tsx` | 結果画面。`ResultCard` を使用 |
-
-### `/components`
-再利用可能な UI コンポーネントを置く。
-1ファイル = 1コンポーネント。named export を使用。
-
-| ファイル | 役割 |
-|---------|------|
-| `QuizCard.tsx` | 問題文と4択ボタンを表示。選択状態を管理 |
-| `FeedbackBanner.tsx` | 回答後に正誤（○/✕）と解説文を表示 |
-| `ResultCard.tsx` | スコア・レベル名・アドバイスを表示 |
-
-### `/data`
-静的データを置く。コンポーネントへの直書きは禁止。
-
-| ファイル | 役割 |
-|---------|------|
-| `questions.ts` | 10問分の問題データ（問題文・選択肢・正答・解説） |
-
-### `/types`
-TypeScript の型定義を置く。型はここに集約し、各ファイルで import して使う。
-
-| ファイル | 役割 |
-|---------|------|
-| `quiz.ts` | `Question` 型・`Level` 型・`QuizResult` 型など |
-
-### `/docs`
-プロジェクトのドキュメント一式。コードと同じリポジトリで管理する。
-
-### `/public`
-Next.js の静的ファイル配信ディレクトリ。画像・OGP画像などを置く。
+| URL | ファイル | レンダリング | 説明 |
+|-----|---------|------------|------|
+| `/` | `app/page.tsx` | Static | トップ。クイズ開始 + ユースケースへの導線 |
+| `/quiz` | `app/quiz/page.tsx` | Dynamic | クイズ進行。Supabase から問題取得 |
+| `/result` | `app/result/page.tsx` | Static | 結果表示。sessionStorage からスコア読み込み |
+| `/usecases` | `app/usecases/page.tsx` | Dynamic | 記事一覧。カテゴリフィルタ対応 |
+| `/usecases/[slug]` | `app/usecases/[slug]/page.tsx` | Dynamic | 記事詳細。スラッグで記事を取得 |
+| `/api/sync` | `app/api/sync/route.ts` | Dynamic | Notion Webhook 受信・Supabase 同期 |
 
 ---
 
-## 3. 命名規則まとめ
+## 3. コンポーネント一覧
+
+### AIチェッカー
+
+| ファイル | 種別 | Props | 役割 |
+|---------|------|-------|------|
+| `QuizGame.tsx` | Client | `questions: Question[]` | クイズ全体の状態管理・進行制御 |
+| `QuizCard.tsx` | Client | `question` `selectedIndex` `isAnswered` `onSelect` | 問題文・4択ボタン表示 |
+| `FeedbackBanner.tsx` | Client | `isCorrect` `explanation` `onNext` `isLast` | 回答後フィードバック表示 |
+| `ResultCard.tsx` | Client | `score` `level` `onRetry` `onHome` | 結果・レベル・アドバイス表示 |
+
+### ユースケース
+
+| ファイル | 種別 | Props | 役割 |
+|---------|------|-------|------|
+| `ArticleCard.tsx` | Server | `article: ArticleSummary` | 記事一覧カード |
+| `ArticleContent.tsx` | Server | `blocks: Block[]` | Notion ブロックを HTML レンダリング |
+| `CategoryFilter.tsx` | Client | なし（URL params で管理） | カテゴリ絞り込みボタン |
+
+---
+
+## 4. 型定義一覧
+
+### `types/quiz.ts`
+
+| 型 | 説明 |
+|----|------|
+| `Question` | 問題データ（id・category・text・options・answerIndex・explanation） |
+| `Category` | `'tool'` `'term'` `'usage'` `'risk'` |
+| `Level` | `'beginner'` `'user'` `'advanced'` `'expert'` |
+| `QuizResult` | クイズ結果（answers・score・level） |
+
+### `types/article.ts`
+
+| 型 | 説明 |
+|----|------|
+| `Article` | 記事全データ |
+| `ArticleSummary` | 一覧表示用の抜粋（id・title・slug・category・excerpt・thumbnail_url・published_at） |
+| `ArticleCategory` | `'導入ヒント'` `'実践ガイド'` |
+| `Block` | Notion ブロックの Union 型（paragraph・heading_2/3・image・quote など） |
+
+---
+
+## 5. 外部サービスとの接続
+
+| サービス | 用途 | 接続ファイル |
+|---------|------|------------|
+| Supabase | 問題データ・記事データの取得 | `lib/supabase.ts` |
+| Notion API | Webhook 受信後のデータ取得 | `app/api/sync/route.ts` |
+| Supabase Storage | 記事画像の永続保存（`article-images` バケット） | `app/api/sync-article/route.ts`（実装予定） |
+
+---
+
+## 6. 命名規則
 
 | 種別 | 規則 | 例 |
 |------|------|----|
-| コンポーネントファイル | PascalCase | `QuizCard.tsx` |
+| コンポーネントファイル | PascalCase | `ArticleCard.tsx` |
 | ページファイル | Next.js 規約 | `page.tsx` |
-| データファイル | camelCase | `questions.ts` |
-| 型定義ファイル | camelCase | `quiz.ts` |
-| ドキュメント | kebab-case | `feature-design.md` |
+| データ・ライブラリ | camelCase | `supabase.ts` |
+| 型定義ファイル | camelCase | `article.ts` |
+| ドキュメント | kebab-case | `usecases-design.md` |
 
 ---
 
-## 4. Phase 2 以降の追加予定ディレクトリ
-
-```
-aichecker/
-├── scripts/                    # バックエンドスクリプト（Python）
-│   └── sync_notion_to_supabase.py  # Notion → Supabase 同期スクリプト
-│
-└── app/
-    └── api/                    # Next.js API Routes（必要になった時点で追加）
-```
-
-| ディレクトリ | 追加タイミング | 目的 |
-|-------------|-------------|------|
-| `scripts/` | Phase 2 | Notion→Supabase 同期スクリプト（Python） |
-| `app/api/` | Phase 2 | Supabase からの問題取得 API |
-
----
-
-## 5. コミットしないファイル（.gitignore）
+## 7. コミットしないファイル（.gitignore）
 
 | ファイル・フォルダ | 理由 |
 |-----------------|------|
 | `node_modules/` | 依存パッケージ（npm install で再生成可能） |
 | `.next/` | ビルド成果物 |
 | `.env` / `.env.local` | API キー・DB 接続情報（機密情報） |
+| `__pycache__/` `*.py[cod]` `.venv/` | Python 関連（Phase 2 以降） |
