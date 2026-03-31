@@ -1,4 +1,7 @@
-# /draft-article
+---
+name: draft-article
+description: 元記事URLをもとにAI未経験ビジネスパーソン向けの記事を生成し、Notionに下書きとして自動保存するスキル
+---
 
 AIに不慣れなビジネスパーソン向けの記事を、元記事URLをもとに生成し、Notion に下書きとして自動保存するスキル。
 
