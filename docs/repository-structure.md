@@ -25,8 +25,10 @@ aichecker/
 │   │   └── [slug]/
 │   │       └── page.tsx              # ユースケース記事詳細
 │   └── api/
-│       └── sync/
-│           └── route.ts              # Notion → Supabase 問題同期 Webhook
+│       ├── sync/
+│       │   └── route.ts              # Notion → Supabase 問題同期 Webhook
+│       └── sync-article/
+│           └── route.ts              # Notion → Supabase 記事同期 Webhook（画像Storage移行含む）
 │
 ├── components/                       # UI コンポーネント（1ファイル = 1コンポーネント）
 │   │
@@ -45,7 +47,8 @@ aichecker/
 │   └── questions.ts                  # 問題データ（10問）
 │
 ├── lib/                              # 共通ライブラリ
-│   └── supabase.ts                   # Supabase クライアント
+│   ├── supabase.ts                   # Supabase クライアント（読み取り用・anon key）
+│   └── supabase-admin.ts             # Supabase 管理クライアント（書き込み用・service role key）
 │
 ├── types/                            # TypeScript 型定義
 │   ├── quiz.ts                       # Question・Level・QuizResult 型
@@ -80,7 +83,8 @@ aichecker/
 | `/result` | `app/result/page.tsx` | Static | 結果表示。sessionStorage からスコア読み込み |
 | `/usecases` | `app/usecases/page.tsx` | Dynamic | 記事一覧。カテゴリフィルタ対応 |
 | `/usecases/[slug]` | `app/usecases/[slug]/page.tsx` | Dynamic | 記事詳細。スラッグで記事を取得 |
-| `/api/sync` | `app/api/sync/route.ts` | Dynamic | Notion Webhook 受信・Supabase 同期 |
+| `/api/sync` | `app/api/sync/route.ts` | Dynamic | Notion Webhook 受信・問題データ同期 |
+| `/api/sync-article` | `app/api/sync-article/route.ts` | Dynamic | Notion Webhook 受信・記事データ同期（画像 Storage 移行含む） |
 
 ---
 
@@ -133,7 +137,7 @@ aichecker/
 |---------|------|------------|
 | Supabase | 問題データ・記事データの取得 | `lib/supabase.ts` |
 | Notion API | Webhook 受信後のデータ取得 | `app/api/sync/route.ts` |
-| Supabase Storage | 記事画像の永続保存（`article-images` バケット） | `app/api/sync-article/route.ts`（実装予定） |
+| Supabase Storage | 記事画像の永続保存（`article-images` バケット） | `app/api/sync-article/route.ts` |
 
 ---
 
