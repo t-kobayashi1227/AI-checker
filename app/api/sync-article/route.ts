@@ -54,12 +54,12 @@ async function uploadToStorage(
   const path = `${pageId}/${filename}.${ext}`
 
   const { error } = await supabaseAdmin.storage
-    .from('article-images')
+    .from('usecases-images')
     .upload(path, buffer, { contentType, upsert: true })
 
   if (error) throw new Error(`Storage upload failed: ${error.message}`)
 
-  const { data } = supabaseAdmin.storage.from('article-images').getPublicUrl(path)
+  const { data } = supabaseAdmin.storage.from('usecases-images').getPublicUrl(path)
   return data.publicUrl
 }
 

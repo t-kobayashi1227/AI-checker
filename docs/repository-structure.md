@@ -137,7 +137,7 @@ aichecker/
 |---------|------|------------|
 | Supabase | 問題データ・記事データの取得 | `lib/supabase.ts` |
 | Notion API | Webhook 受信後のデータ取得 | `app/api/sync/route.ts` |
-| Supabase Storage | 記事画像の永続保存（`article-images` バケット） | `app/api/sync-article/route.ts` |
+| Supabase Storage | 記事画像の永続保存（`usecases-images` バケット） | `app/api/sync-article/route.ts` |
 
 ---
 

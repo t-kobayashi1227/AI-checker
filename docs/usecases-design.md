@@ -174,7 +174,7 @@ CREATE TABLE usecases (
 );
 ```
 
-Storage バケット：`article-images`（public）
+Storage バケット：`usecases-images`（public）
 - Notion からダウンロードした画像を永続保存する
 
 ---
