@@ -7,9 +7,10 @@
  * {
  *   "title": "記事タイトル",
  *   "category": "導入ヒント" | "実践ガイド",
- *   "sourceUrl": "https://...",
+ *   "excerpt": "概要文（50〜80字）",
+ *   "sourceUrl": "https://... または null",
  *   "blocks": [
- *     { "type": "heading_2", "text": "見出し" },
+ *     { "type": "heading_2", "text": "はじめに" },
  *     { "type": "paragraph", "text": "本文" },
  *     { "type": "bulleted_list_item", "text": "箇条書き" },
  *     { "type": "image_placeholder", "text": "[IMAGE: 説明]" }
@@ -26,10 +27,10 @@ const dotenv = require('dotenv')
 dotenv.config({ path: resolve(process.cwd(), '.env.local') })
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY })
-const DATABASE_ID = process.env.NOTION_DATABASE_ID
+const DATABASE_ID = process.env.NOTION_USECASES_DATABASE_ID
 
 if (!process.env.NOTION_API_KEY || !DATABASE_ID) {
-  console.error('Error: NOTION_API_KEY と NOTION_DATABASE_ID を .env.local に設定してください')
+  console.error('Error: NOTION_API_KEY と NOTION_USECASES_DATABASE_ID を .env.local に設定してください')
   process.exit(1)
 }
 
@@ -118,6 +119,9 @@ async function createDraft() {
       },
       'カテゴリ': {
         select: { name: article.category },
+      },
+      '概要文': {
+        rich_text: [{ text: { content: article.excerpt || '' } }],
       },
       '元記事URL': {
         url: article.sourceUrl || null,
