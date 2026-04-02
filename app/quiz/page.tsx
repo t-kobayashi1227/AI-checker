@@ -19,10 +19,7 @@ const QUESTION_COUNT = 10
 
 async function fetchQuestions(): Promise<Question[]> {
   const { data, error } = await supabase
-    .from('questions')
-    .select('id, category, question_text, options, answer_index, explanation')
-    .eq('is_active', true)
-    .limit(QUESTION_COUNT)
+    .rpc('get_random_questions', { limit_count: QUESTION_COUNT })
 
   if (error || !data || data.length === 0) {
     return staticQuestions
